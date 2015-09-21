@@ -1,22 +1,30 @@
 package com.example.beak.fuckxiaomi;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.beak.cameralib.AutoCameraView;
 
+import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements ResizeFragment.OnSizeNeedChangeListener{
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final String SAVING_ROOT = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() +
+            File.separator + "anySizePreviewSavingBitmap";
+
     private AutoCameraView mAutoView = null;
-    private Button mMainPreviewSizeChange = null;
+    private Button mMainPreviewSizeChangeBtn = null, mMainSaveBtn;
 
     private ResizeFragment mResizeFragment = null;
 
@@ -39,12 +47,30 @@ public class MainActivity extends AppCompatActivity implements ResizeFragment.On
             e.printStackTrace();
         }
 
-        mMainPreviewSizeChange = (Button)findViewById(R.id.main_change_size);
+        mMainPreviewSizeChangeBtn = (Button)findViewById(R.id.main_change_size);
+        mMainSaveBtn = (Button)findViewById(R.id.main_take_pic);
 
-        mMainPreviewSizeChange.setOnClickListener(new View.OnClickListener() {
+        mMainPreviewSizeChangeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showFragment();
+            }
+        });
+        mMainSaveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAutoView.takePicture(new AutoCameraView.OnPictureTakenCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] oriData, Bitmap croppedBmp) {
+                        Toast.makeText(MainActivity.this, "now saving 3 bitmaps start ..", Toast.LENGTH_SHORT).show();
+                        Bitmap oriBmp = BitmapFactory.decodeByteArray(oriData, 0, oriData.length);
+                        new BitmapSaveTask(MainActivity.this, oriBmp).execute(SAVING_ROOT + File.separator + "bmp_by_oriData.png");
+
+                        new BitmapSaveTask(MainActivity.this, croppedBmp).execute(SAVING_ROOT + File.separator + "bmp_by_croppedBmp.png");
+
+                        new BitmapSaveTask(MainActivity.this, mAutoView.getBitmap()).execute(SAVING_ROOT + File.separator + "bmp_by_getBitmap.png");
+                    }
+                });
             }
         });
     }

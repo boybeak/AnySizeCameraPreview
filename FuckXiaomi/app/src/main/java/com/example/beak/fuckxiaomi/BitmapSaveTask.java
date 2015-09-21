@@ -1,5 +1,6 @@
 package com.example.beak.fuckxiaomi;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
@@ -14,16 +15,21 @@ public class BitmapSaveTask extends AsyncTask<String, Integer, String> {
 
     private Bitmap mBmp = null;
     private Context mContext = null;
+    private DownloadManager mDownloadManager = null;
 
     public BitmapSaveTask (Context context, Bitmap bmp) {
         mContext = context;
         mBmp = bmp;
+        mDownloadManager = (DownloadManager)mContext.getSystemService(Context.DOWNLOAD_SERVICE);
     }
 
     @Override
     protected String doInBackground(String... params) {
         if (mBmp != null) {
             File file = new File(params[0]);
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(file);
@@ -49,5 +55,7 @@ public class BitmapSaveTask extends AsyncTask<String, Integer, String> {
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
         Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
+        File file = new File(s);
+        mDownloadManager.addCompletedDownload(file.getName(), file.getAbsolutePath(), true, "image/*", file.getAbsolutePath(), file.length(), true);
     }
 }
